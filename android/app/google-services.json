@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "165104845659",
+    "project_id": "drama-73c3c",
+    "storage_bucket": "drama-73c3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165104845659:android:b61b6581df8ce5eef4107e",
+        "android_client_info": {
+          "package_name": "com.ott.drama"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoGRtgerqDzKWkAKNiuhWz3EX0U1c3kOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165104845659:android:3de785920de53a0ff4107e",
+        "android_client_info": {
+          "package_name": "com.outbuster.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoGRtgerqDzKWkAKNiuhWz3EX0U1c3kOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
