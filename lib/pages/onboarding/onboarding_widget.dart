@@ -75,7 +75,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                   'assets/images/app_launcher_icon.png',
                   width: 200.0,
                   height: 200.0,
-                  fit: BoxFit.contain,
+              fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -126,7 +126,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
                         child: Text(
-                          'Outbuster, votre plateforme de streaming de films',
+                          'Outbuster, la plateforme des cinéphiles curieux.',
                           style:
                               FlutterFlowTheme.of(context).bodyMedium.override(
                                     font: GoogleFonts.poppins(

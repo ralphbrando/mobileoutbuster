@@ -110,88 +110,120 @@ class _HomeWidgetState extends State<HomeWidget> {
                               itemCount: results.length,
                               itemBuilder: (context, resultsIndex) {
                                 final resultsItem = results[resultsIndex];
-                                return Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: Image.network(
-                                        functions.cleanStorageUrl(
-                                          getJsonField(
+                                return InkWell(
+                                  splashColor: Colors.transparent,
+                                  focusColor: Colors.transparent,
+                                  hoverColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  onTap: () async {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            TvShowsDetailsWidget(
+                                          tvId: getJsonField(
                                             resultsItem,
-                                            r'''$.film_cover_url''',
+                                            r'''$.id''',
                                           ).toString(),
                                         ),
-                                        width: double.infinity,
-                                        height: 400.0,
-                                        fit: BoxFit.cover,
                                       ),
-                                    ),
-                                    Align(
-                                      alignment: AlignmentDirectional(0.0, 1.0),
-                                      child: Container(
-                                        width: double.infinity,
-                                        height: 200.0,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.transparent,
-                                              FlutterFlowTheme.of(context)
-                                                  .primaryBackground
-                                            ],
-                                            stops: [0.0, 1.0],
-                                            begin:
-                                                AlignmentDirectional(0.0, -1.0),
-                                            end: AlignmentDirectional(0, 1.0),
+                                    );
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        child: Image.network(
+                                          functions.cleanStorageUrl(
+                                            getJsonField(
+                                              resultsItem,
+                                              r'''$.film_cover_url''',
+                                            ).toString(),
+                                          ),
+                                          width: double.infinity,
+                                          height: 400.0,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: AlignmentDirectional(0.0, 1.0),
+                                        child: Container(
+                                          width: double.infinity,
+                                          height: 200.0,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.transparent,
+                                                FlutterFlowTheme.of(context)
+                                                    .primaryBackground
+                                              ],
+                                              stops: [0.0, 1.0],
+                                              begin:
+                                                  AlignmentDirectional(0.0, -1.0),
+                                              end: AlignmentDirectional(0, 1.0),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    Align(
-                                      alignment:
-                                          AlignmentDirectional(0.0, 0.85),
-                                      child: Container(
-                                        width: double.infinity,
-                                        height: 68.0,
-                                        decoration: BoxDecoration(),
-                                        child: Padding(
-                                          padding:
-                                              EdgeInsetsDirectional.fromSTEB(
-                                                  24.0, 0.0, 24.0, 0.0),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.max,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Expanded(
-                                                child: Padding(
-                                                  padding: EdgeInsetsDirectional
-                                                      .fromSTEB(
-                                                          0.0, 0.0, 8.0, 0.0),
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        getJsonField(
-                                                          resultsItem,
-                                                          r'''$.film_original_title''',
-                                                        ).toString(),
-                                                        maxLines: 1,
-                                                        style:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .headlineMedium
-                                                                .override(
-                                                                  font: GoogleFonts
-                                                                      .poppins(
+                                      Align(
+                                        alignment:
+                                            AlignmentDirectional(0.0, 0.85),
+                                        child: Container(
+                                          width: double.infinity,
+                                          height: 68.0,
+                                          decoration: BoxDecoration(),
+                                          child: Padding(
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                    24.0, 0.0, 24.0, 0.0),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: EdgeInsetsDirectional
+                                                        .fromSTEB(
+                                                            0.0, 0.0, 8.0, 0.0),
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.max,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          getJsonField(
+                                                            resultsItem,
+                                                            r'''$.film_original_title''',
+                                                          ).toString(),
+                                                          maxLines: 1,
+                                                          style:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .headlineMedium
+                                                                  .override(
+                                                                    font: GoogleFonts
+                                                                        .poppins(
+                                                                      fontWeight: FlutterFlowTheme.of(
+                                                                              context)
+                                                                          .headlineMedium
+                                                                          .fontWeight,
+                                                                      fontStyle: FlutterFlowTheme.of(
+                                                                              context)
+                                                                          .headlineMedium
+                                                                          .fontStyle,
+                                                                    ),
+                                                                    fontSize:
+                                                                        20.0,
+                                                                    letterSpacing:
+                                                                        0.0,
                                                                     fontWeight: FlutterFlowTheme.of(
                                                                             context)
                                                                         .headlineMedium
@@ -201,36 +233,34 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                                         .headlineMedium
                                                                         .fontStyle,
                                                                   ),
-                                                                  fontSize:
-                                                                      20.0,
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              EdgeInsetsDirectional
+                                                                  .fromSTEB(
+                                                                      0.0,
+                                                                      8.0,
+                                                                      0.0,
+                                                                      0.0),
+                                                          child: Text(
+                                                            '',
+                                                            style: FlutterFlowTheme
+                                                                    .of(context)
+                                                                .bodyMedium
+                                                                .override(
+                                                                  font: GoogleFonts
+                                                                      .poppins(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                    fontStyle: FlutterFlowTheme.of(
+                                                                            context)
+                                                                        .bodyMedium
+                                                                        .fontStyle,
+                                                                  ),
+                                                                  fontSize: 12.0,
                                                                   letterSpacing:
                                                                       0.0,
-                                                                  fontWeight: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .headlineMedium
-                                                                      .fontWeight,
-                                                                  fontStyle: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .headlineMedium
-                                                                      .fontStyle,
-                                                                ),
-                                                      ),
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .fromSTEB(
-                                                                    0.0,
-                                                                    8.0,
-                                                                    0.0,
-                                                                    0.0),
-                                                        child: Text(
-                                                          '',
-                                                          style: FlutterFlowTheme
-                                                                  .of(context)
-                                                              .bodyMedium
-                                                              .override(
-                                                                font: GoogleFonts
-                                                                    .poppins(
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500,
@@ -239,49 +269,15 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                                       .bodyMedium
                                                                       .fontStyle,
                                                                 ),
-                                                                fontSize: 12.0,
-                                                                letterSpacing:
-                                                                    0.0,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
-                                                                fontStyle: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .fontStyle,
-                                                              ),
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ],
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                              Align(
-                                                alignment: AlignmentDirectional(
-                                                    0.0, 0.7),
-                                                child: InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  focusColor:
-                                                      Colors.transparent,
-                                                  hoverColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap: () async {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            TvShowsDetailsWidget(
-                                                          tvId: getJsonField(
-                                                            resultsItem,
-                                                            r'''$.id''',
-                                                          ).toString(),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
+                                                Align(
+                                                  alignment: AlignmentDirectional(
+                                                      0.0, 0.7),
                                                   child: Container(
                                                     width: 40.0,
                                                     height: 40.0,
@@ -304,13 +300,13 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 );
                               },
                             ),
@@ -452,6 +448,10 @@ class _HomeWidgetState extends State<HomeWidget> {
                                       hoverColor: Colors.transparent,
                                       highlightColor: Colors.transparent,
                                       onTap: () async {
+                                        final contentType = getJsonField(
+                                          filmItem,
+                                          r'''$.content_type''',
+                                        )?.toString() ?? 'film';
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -462,6 +462,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                 r'''$.id''',
                                               ).toString(),
                                               serie: filmItem,
+                                              contentType: contentType,
                                             ),
                                           ),
                                         );

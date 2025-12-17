@@ -96,10 +96,10 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                         ),
                       ),
                       if ((widget.videoUrl ?? '').isNotEmpty)
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              0.0, 100.0, 0.0, 0.0),
-                          child: FlutterFlowWebView(
+                      Padding(
+                        padding: EdgeInsetsDirectional.fromSTEB(
+                            0.0, 100.0, 0.0, 0.0),
+                        child: FlutterFlowWebView(
                             content: '''
                               <!DOCTYPE html>
                               <html>
@@ -117,11 +117,11 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                             ''',
                             bypass: false,
                             html: true,
-                            width: MediaQuery.sizeOf(context).width * 1.0,
-                            height: 500.0,
-                            verticalScroll: true,
-                            horizontalScroll: true,
-                          ),
+                          width: MediaQuery.sizeOf(context).width * 1.0,
+                          height: 500.0,
+                          verticalScroll: true,
+                          horizontalScroll: true,
+                        ),
                         )
                       else
                         Center(
@@ -137,7 +137,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                                   ),
                             ),
                           ),
-                        ),
+                      ),
                     ],
                   ),
                 ),

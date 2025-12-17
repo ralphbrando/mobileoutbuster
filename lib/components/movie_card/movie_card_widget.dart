@@ -45,62 +45,71 @@ class _MovieCardWidgetState extends State<MovieCardWidget> {
   @override
   void dispose() {
     _model.maybeDispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 115.0,
-      height: 224.0,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
-            child: Image.network(
-              widget.image!,
-              width: 115.0,
-              height: 172.0,
-              fit: BoxFit.cover,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use available width, or default to 115 if unconstrained
+        final cardWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 115.0;
+        // Calculate image height based on aspect ratio (roughly 1.5:1)
+        final imageHeight = cardWidth * 1.5;
+        
+        return Container(
+          width: cardWidth,
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
           ),
-          Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 8.0),
-            child: Text(
-              widget.title!,
-              maxLines: 1,
-              style: FlutterFlowTheme.of(context).bodyMedium.override(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.network(
+                  widget.image ?? '',
+                  width: cardWidth,
+                  height: imageHeight,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: cardWidth,
+                      height: imageHeight,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Icon(
+                        Icons.movie,
+                        size: 40.0,
+                        color: FlutterFlowTheme.of(context).secondaryText,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
+                child: Text(
+                  widget.title ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: FlutterFlowTheme.of(context).bodyMedium.override(
                     font: GoogleFonts.poppins(
                       fontWeight: FontWeight.w500,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).bodyMedium.fontStyle,
                     ),
                     color: FlutterFlowTheme.of(context).secondaryText,
+                    fontSize: 12.0,
                     letterSpacing: 0.0,
-                    fontWeight: FontWeight.w500,
-                    fontStyle:
-                        FlutterFlowTheme.of(context).bodyMedium.fontStyle,
                   ),
-            ),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Spacer(),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -339,12 +339,12 @@ class _SignInWidgetState extends State<SignInWidget> {
                                     userData: null, // You may need to create a UsersStruct from the response
                                   );
                                   
-                                  safeSetState(() {});
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          NavBarPage(initialPage: 'Home'),
+                            safeSetState(() {});
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    NavBarPage(initialPage: 'Home'),
                                     ),
                                   );
                                 }

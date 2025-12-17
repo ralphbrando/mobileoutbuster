@@ -348,6 +348,96 @@ class GetVideoLinkCall {
   }
 }
 
+class GetSerieDetailsCall {
+  static Future<ApiCallResponse> call({
+    required int serieId,
+  }) async {
+    return ApiManager.instance.makeApiCall(
+      callName: 'SERIE_DETAILS',
+      apiUrl: '$kOutbusterApiBaseUrl/serie/$serieId',
+      callType: ApiCallType.GET,
+      headers: {
+        'Accept': 'application/json',
+      },
+      params: {},
+      returnBody: true,
+      encodeBodyUtf8: false,
+      decodeUtf8: false,
+      cache: false,
+      isStreamingApi: false,
+      alwaysAllowBody: false,
+    );
+  }
+}
+
+class GetSerieVideoLinkCall {
+  static Future<ApiCallResponse> call({
+    required int episodeId,
+  }) async {
+    return ApiManager.instance.makeApiCall(
+      callName: 'SERIE_VIDEO_LINK',
+      apiUrl: '$kOutbusterApiBaseUrl/serie-video/$episodeId',
+      callType: ApiCallType.GET,
+      headers: {
+        'Accept': 'application/json',
+      },
+      params: {},
+      returnBody: true,
+      encodeBodyUtf8: false,
+      decodeUtf8: false,
+      cache: false,
+      isStreamingApi: false,
+      alwaysAllowBody: false,
+    );
+  }
+}
+
+class GetFavoritesCall {
+  static Future<ApiCallResponse> call() async {
+    return ApiManager.instance.makeApiCall(
+      callName: 'FAVORITES',
+      apiUrl: '$kOutbusterApiBaseUrl/favorites',
+      callType: ApiCallType.GET,
+      headers: {
+        'Accept': 'application/json',
+      },
+      params: {},
+      returnBody: true,
+      encodeBodyUtf8: false,
+      decodeUtf8: false,
+      cache: false,
+      isStreamingApi: false,
+      alwaysAllowBody: false,
+    );
+  }
+}
+
+class ToggleFavoriteCall {
+  static Future<ApiCallResponse> call({
+    required int filmId,
+  }) async {
+    return ApiManager.instance.makeApiCall(
+      callName: 'TOGGLE_FAVORITE',
+      apiUrl: '$kOutbusterApiBaseUrl/favorites/toggle',
+      callType: ApiCallType.POST,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      params: {
+        'film_id': filmId,
+      },
+      bodyType: BodyType.X_WWW_FORM_URL_ENCODED,
+      returnBody: true,
+      encodeBodyUtf8: false,
+      decodeUtf8: false,
+      cache: false,
+      isStreamingApi: false,
+      alwaysAllowBody: false,
+    );
+  }
+}
+
 // Legacy SeriesCall for backward compatibility - maps to Films
 class SeriesCall {
   static Future<ApiCallResponse> call({

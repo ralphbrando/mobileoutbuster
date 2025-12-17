@@ -1,8 +1,10 @@
 import '/backend/api_requests/api_calls.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/custom_functions.dart' as functions;
 import '/pages/onboarding/onboarding_widget.dart';
 import '/pages/cms_page/cms_page_widget.dart';
+import '/pages/tv_shows_details/tv_shows_details_widget.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -108,9 +110,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       if (!snapshot.hasData) {
                         return Container(
                           padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context).secondaryBackground,
-                            borderRadius: BorderRadius.circular(8.0),
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                        borderRadius: BorderRadius.circular(8.0),
                             border: Border.all(
                               color: FlutterFlowTheme.of(context).alternate,
                               width: 1.0,
@@ -143,11 +145,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                            Text(
                                 'Aucun abonnement actif',
                                 style: FlutterFlowTheme.of(context).titleMedium.override(
-                                      font: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
+                                    font: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
                                       ),
                                       letterSpacing: 0.0,
                                     ),
@@ -216,7 +218,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                           style: FlutterFlowTheme.of(context).titleMedium.override(
                                                 font: GoogleFonts.poppins(
                                                   fontWeight: FontWeight.w500,
-                                                ),
+                                    ),
                                                 color: FlutterFlowTheme.of(context).primaryBtnText,
                                                 letterSpacing: 0.0,
                                               ),
@@ -238,7 +240,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                             fontWeight: FontWeight.bold,
                                             color: FlutterFlowTheme.of(context).primary,
                                           ),
-                                          letterSpacing: 0.0,
+                                    letterSpacing: 0.0,
                                         ),
                                   ),
                                 ),
@@ -249,7 +251,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                               child: Divider(
                                 color: FlutterFlowTheme.of(context).primaryBtnText.withOpacity(0.3),
                                 thickness: 1.0,
-                              ),
+                                  ),
                             ),
                             Padding(
                               padding: EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
@@ -265,7 +267,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                             Icons.calendar_today,
                                             color: FlutterFlowTheme.of(context).primaryBtnText,
                                             size: 16.0,
-                                          ),
+                              ),
                                           Padding(
                                             padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
                                             child: Text(
@@ -342,11 +344,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       );
                     },
                   ),
-                  // Pages CMS Section
+                  // Ma Bibliothèque Section
                   Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(0.0, 32.0, 0.0, 16.0),
                     child: Text(
-                      'Informations',
+                      'Ma Bibliothèque',
                       style: FlutterFlowTheme.of(context).titleSmall.override(
                             font: GoogleFonts.poppins(
                               fontWeight: FontWeight.w500,
@@ -360,6 +362,147 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                 .titleSmall
                                 .fontStyle,
                           ),
+                    ),
+                  ),
+                  FutureBuilder<ApiCallResponse>(
+                    future: GetFavoritesCall.call(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Container(
+                          height: 120.0,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      final favoritesData = getJsonField(snapshot.data!.jsonBody, r'''$.data''');
+                      final favorites = favoritesData != null && favoritesData is List ? favoritesData : <dynamic>[];
+                      
+                      if (favorites.isEmpty) {
+                        return Container(
+                          padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                          decoration: BoxDecoration(
+                            color: FlutterFlowTheme.of(context).secondaryBackground,
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.favorite_border,
+                                color: FlutterFlowTheme.of(context).secondaryText,
+                                size: 24.0,
+                              ),
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 0.0),
+                                child: Text(
+                                  'Aucun film dans vos favoris',
+                                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                        color: FlutterFlowTheme.of(context).secondaryText,
+                                        letterSpacing: 0.0,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      
+                      return Container(
+                        height: 180.0,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: favorites.length,
+                          itemBuilder: (context, index) {
+                            final film = favorites[index];
+                            return Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 12.0, 0.0),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => TvShowsDetailsWidget(
+                                        tvId: getJsonField(film, r'''$.id''').toString(),
+                                        serie: film,
+                                        contentType: 'film',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.network(
+                                        functions.cleanStorageUrl(
+                                          getJsonField(film, r'''$.film_cover_url''').toString(),
+                                        ),
+                                        width: 100.0,
+                                        height: 140.0,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 100.0,
+                                            height: 140.0,
+                                            color: FlutterFlowTheme.of(context).secondaryBackground,
+                                            child: Icon(
+                                              Icons.movie,
+                                              size: 40.0,
+                                              color: FlutterFlowTheme.of(context).secondaryText,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
+                                      child: SizedBox(
+                                        width: 100.0,
+                                        child: Text(
+                                          getJsonField(film, r'''$.film_original_title''').toString(),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: FlutterFlowTheme.of(context).bodySmall.override(
+                                                fontSize: 12.0,
+                                                letterSpacing: 0.0,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                  // Pages CMS Section
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 32.0, 0.0, 16.0),
+                    child: Text(
+                      'Informations',
+                      style: FlutterFlowTheme.of(context).titleSmall.override(
+                                    font: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w500,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                          .fontStyle,
+                                    ),
+                                    letterSpacing: 0.0,
+                                    fontWeight: FontWeight.w500,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                .titleSmall
+                                        .fontStyle,
+                                  ),
                     ),
                   ),
                   FutureBuilder<ApiCallResponse>(
@@ -446,11 +589,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                         Icons.arrow_forward_ios,
                                         color: FlutterFlowTheme.of(context).secondaryText,
                                         size: 16.0,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                             ),
                           );
                         }),

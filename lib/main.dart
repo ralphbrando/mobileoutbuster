@@ -90,7 +90,7 @@ class _MyAppState extends State<MyApp> {
               builder: (context) => Container(
                 color: FlutterFlowTheme.of(context).primaryBackground,
                 child: Center(
-                  child: Image.asset(
+                child: Image.asset(
                     'assets/images/app_launcher_icon.png',
                     fit: BoxFit.contain,
                     width: 200.0,

@@ -278,6 +278,10 @@ class _SearchWidgetState extends State<SearchWidget> {
                               hoverColor: Colors.transparent,
                               highlightColor: Colors.transparent,
                               onTap: () async {
+                                final contentType = getJsonField(
+                                  searMoviesItem,
+                                  r'''$.content_type''',
+                                )?.toString() ?? 'film';
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -287,6 +291,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                                         r'''$.id''',
                                       ).toString(),
                                       serie: searMoviesItem,
+                                      contentType: contentType,
                                     ),
                                   ),
                                 );
@@ -300,12 +305,12 @@ class _SearchWidgetState extends State<SearchWidget> {
                                       borderRadius: BorderRadius.circular(8.0),
                                       child: Image.network(
                                         functions.cleanStorageUrl(
-                                          valueOrDefault<String>(
-                                            '${getJsonField(
-                                              searMoviesItem,
+                                        valueOrDefault<String>(
+                                          '${getJsonField(
+                                            searMoviesItem,
                                               r'''$.film_cover_url''',
-                                            ).toString()}',
-                                            'https://www.themoviedb.org/t/p/w1280/ox4goZd956BxqJH6iLwhWPL9ct4.jpg',
+                                          ).toString()}',
+                                          'https://www.themoviedb.org/t/p/w1280/ox4goZd956BxqJH6iLwhWPL9ct4.jpg',
                                           ),
                                         ),
                                         width: double.infinity,
