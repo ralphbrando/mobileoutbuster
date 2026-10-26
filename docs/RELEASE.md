@@ -104,6 +104,10 @@ Validation locale du 26 octobre 2026 : analyse Dart sans erreur, quatre tests de
 réussis (dont deux exports visuels), compilation web de production réussie et APK Android
 debug compilé avec succès. La compilation et la signature iOS ne sont pas encore validées.
 
+Première exécution Codemagic `web-preview` réussie le 26 octobre 2026, incluant
+l'analyse, les tests, la compilation et la création de l'archive web :
+https://codemagic.io/app/6adf2390a506dbe905d07c09/build/6adf27bf4a72334e32e548ca
+
 Documentation de référence :
 
 - https://docs.codemagic.io/yaml-quick-start/building-a-flutter-app/
