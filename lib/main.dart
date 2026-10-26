@@ -10,6 +10,7 @@ import 'backend/firebase/firebase_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'index.dart';
+import 'components/launch/outbuster_launch_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,19 +87,7 @@ class _MyAppState extends State<MyApp> {
       ),
       themeMode: _themeMode,
       home: initialUser == null || displaySplashImage
-          ? Builder(
-              builder: (context) => Container(
-                color: FlutterFlowTheme.of(context).primaryBackground,
-                child: Center(
-                child: Image.asset(
-                    'assets/images/app_launcher_icon.png',
-                    fit: BoxFit.contain,
-                    width: 200.0,
-                    height: 200.0,
-                  ),
-                ),
-              ),
-            )
+          ? const OutbusterLaunchScreen()
           : currentUser!.loggedIn
               ? NavBarPage()
               : OnboardingWidget(),

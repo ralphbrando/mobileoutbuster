@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+1
+version: 1.0.2+1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -114,6 +114,7 @@ dependency_overrides:
   uuid: ^4.0.0
 
 dev_dependencies:
+  flutter_native_splash: 2.4.1
   flutter_launcher_icons: 0.13.1
   flutter_lints: 4.0.0
   image: 4.2.0
@@ -128,7 +129,9 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   web:
     generate: true
-  image_path: 'assets/images/app_launcher_icon.png'
+  image_path: 'assets/branding/app-icon.png'
+  adaptive_icon_background: '#08090B'
+  adaptive_icon_foreground: 'assets/branding/adaptive-foreground.png'
 
 
 # For information on the generic Dart part of this file, see the
@@ -144,6 +147,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/branding/
     - assets/fonts/
     - assets/images/
     - assets/videos/
@@ -153,6 +157,12 @@ flutter:
     - assets/jsons/
 
   fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
     - family: Movie
       fonts:
         - asset: assets/fonts/movie.ttf
