@@ -65,7 +65,8 @@ Invitations demandées :
 
 ## Secrets propres à l'application
 
-Les groupes suivants doivent être créés dans les réglages de **mobileoutbuster**.
+Les groupes suivants sont créés dans les réglages de **mobileoutbuster**, avec
+`OUTBUSTER_STORE_IDS_CONFIRMED=false`. Les secrets de signature restent à renseigner.
 Ne pas reprendre les groupes ou les certificats d'un autre projet.
 
 Groupe `outbuster_android_release` :
@@ -98,6 +99,10 @@ l'action du bouton Démarrer et l'absence de bouton pendant le chargement.
 L'analyse signale encore des avertissements historiques sans erreur bloquante après correction
 de l'ancien nom de paramètre `videoid` lors de l'ouverture du lecteur depuis SeasonCard.
 Les tests visuels sont isolés et ne contactent pas Firebase ou l'API de production.
+
+Validation locale du 26 octobre 2026 : analyse Dart sans erreur, quatre tests de lancement
+réussis (dont deux exports visuels), compilation web de production réussie et APK Android
+debug compilé avec succès. La compilation et la signature iOS ne sont pas encore validées.
 
 Documentation de référence :
 

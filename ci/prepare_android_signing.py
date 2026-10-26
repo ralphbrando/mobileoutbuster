@@ -21,7 +21,7 @@ key_path.write_bytes(base64.b64decode(os.environ[required[0]], validate=True))
 key_path.chmod(0o600)
 
 def prop(value):
-    return value.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r")
+    return value.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(" ", "\\ ")
 
 values = {
     "storeFile": str(key_path),
