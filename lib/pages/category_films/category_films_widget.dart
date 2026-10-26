@@ -1,3 +1,4 @@
+import '/components/api_error_panel.dart';
 import '/backend/api_requests/api_calls.dart';
 import '/components/movie_card/movie_card_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -30,11 +31,13 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
   late CategoryFilmsModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  late Future<ApiCallResponse> _films;
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => CategoryFilmsModel());
+    _films = GetFilmsByCategoryCall.call(categoryId: widget.categoryId);
   }
 
   @override
@@ -67,12 +70,12 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
           title: Text(
             widget.categoryName,
             style: FlutterFlowTheme.of(context).headlineSmall.override(
-              font: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-              ),
-              fontSize: 20.0,
-              letterSpacing: 0.0,
-            ),
+                  font: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  fontSize: 20.0,
+                  letterSpacing: 0.0,
+                ),
           ),
           centerTitle: true,
           elevation: 0,
@@ -80,9 +83,7 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
         body: SafeArea(
           top: true,
           child: FutureBuilder<ApiCallResponse>(
-            future: GetFilmsByCategoryCall.call(
-              categoryId: widget.categoryId,
-            ),
+            future: _films,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Center(
@@ -99,6 +100,14 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
               }
 
               final filmsResponse = snapshot.data!;
+              if (!filmsResponse.succeeded)
+                return Center(
+                    child: ApiErrorPanel(
+                        response: filmsResponse,
+                        onRetry: () => setState(() {
+                              _films = GetFilmsByCategoryCall.call(
+                                  categoryId: widget.categoryId);
+                            })));
               final filmsData = getJsonField(
                 filmsResponse.jsonBody,
                 r'''$.data''',
@@ -127,8 +136,8 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
               return Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 190,
                     crossAxisSpacing: 12.0,
                     mainAxisSpacing: 16.0,
                     childAspectRatio: 0.55,
@@ -136,10 +145,17 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
                   itemCount: films.length,
                   itemBuilder: (context, index) {
                     final film = films[index];
-                    final imageUrl = getJsonField(film, r'''$.film_cover_url''')?.toString() ?? '';
-                    final title = getJsonField(film, r'''$.film_original_title''')?.toString() ?? '';
-                    final contentType = getJsonField(film, r'''$.content_type''')?.toString() ?? 'film';
-                    
+                    final imageUrl = getJsonField(film, r'''$.film_cover_url''')
+                            ?.toString() ??
+                        '';
+                    final title =
+                        getJsonField(film, r'''$.film_original_title''')
+                                ?.toString() ??
+                            '';
+                    final contentType =
+                        getJsonField(film, r'''$.content_type''')?.toString() ??
+                            'film';
+
                     return InkWell(
                       splashColor: Colors.transparent,
                       focusColor: Colors.transparent,

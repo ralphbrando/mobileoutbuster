@@ -1,3 +1,4 @@
+import '/components/api_error_panel.dart';
 import '/backend/api_requests/api_calls.dart';
 import '/components/movie_card/movie_card_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -27,11 +28,15 @@ class _HomeWidgetState extends State<HomeWidget> {
   late HomeModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  late Future<ApiCallResponse> _home;
+  late Future<ApiCallResponse> _categories;
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => HomeModel());
+    _home = GetHomeFilmCall.call();
+    _categories = GetCategoriesWithFilmsCall.call();
   }
 
   @override
@@ -67,9 +72,7 @@ class _HomeWidgetState extends State<HomeWidget> {
             mainAxisSize: MainAxisSize.max,
             children: [
               FutureBuilder<ApiCallResponse>(
-                future: SeriesCall.call(
-                  id: 999,
-                ),
+                future: _home,
                 builder: (context, snapshot) {
                   // Customize what your widget looks like when it's loading.
                   if (!snapshot.hasData) {
@@ -86,6 +89,13 @@ class _HomeWidgetState extends State<HomeWidget> {
                     );
                   }
                   final pageViewSeriesResponse = snapshot.data!;
+                  if (!pageViewSeriesResponse.succeeded)
+                    return ApiErrorPanel(
+                      response: pageViewSeriesResponse,
+                      onRetry: () => setState(() {
+                        _home = GetHomeFilmCall.call();
+                      }),
+                    );
 
                   return Builder(
                     builder: (context) {
@@ -132,7 +142,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                   child: Stack(
                                     children: [
                                       ClipRRect(
-                                        borderRadius: BorderRadius.circular(8.0),
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
                                         child: Image.network(
                                           functions.cleanStorageUrl(
                                             getJsonField(
@@ -146,7 +157,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                         ),
                                       ),
                                       Align(
-                                        alignment: AlignmentDirectional(0.0, 1.0),
+                                        alignment:
+                                            AlignmentDirectional(0.0, 1.0),
                                         child: Container(
                                           width: double.infinity,
                                           height: 200.0,
@@ -158,8 +170,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                     .primaryBackground
                                               ],
                                               stops: [0.0, 1.0],
-                                              begin:
-                                                  AlignmentDirectional(0.0, -1.0),
+                                              begin: AlignmentDirectional(
+                                                  0.0, -1.0),
                                               end: AlignmentDirectional(0, 1.0),
                                             ),
                                           ),
@@ -179,15 +191,17 @@ class _HomeWidgetState extends State<HomeWidget> {
                                             child: Row(
                                               mainAxisSize: MainAxisSize.max,
                                               mainAxisAlignment:
-                                                  MainAxisAlignment.spaceBetween,
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.center,
                                               children: [
                                                 Expanded(
                                                   child: Padding(
-                                                    padding: EdgeInsetsDirectional
-                                                        .fromSTEB(
-                                                            0.0, 0.0, 8.0, 0.0),
+                                                    padding:
+                                                        EdgeInsetsDirectional
+                                                            .fromSTEB(0.0, 0.0,
+                                                                8.0, 0.0),
                                                     child: Column(
                                                       mainAxisSize:
                                                           MainAxisSize.max,
@@ -204,35 +218,33 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                             r'''$.film_original_title''',
                                                           ).toString(),
                                                           maxLines: 1,
-                                                          style:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineMedium
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .poppins(
-                                                                      fontWeight: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .headlineMedium
-                                                                          .fontWeight,
-                                                                      fontStyle: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .headlineMedium
-                                                                          .fontStyle,
-                                                                    ),
-                                                                    fontSize:
-                                                                        20.0,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                    fontWeight: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .headlineMedium
-                                                                        .fontWeight,
-                                                                    fontStyle: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .headlineMedium
-                                                                        .fontStyle,
-                                                                  ),
+                                                          style: FlutterFlowTheme
+                                                                  .of(context)
+                                                              .headlineMedium
+                                                              .override(
+                                                                font: GoogleFonts
+                                                                    .poppins(
+                                                                  fontWeight: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .headlineMedium
+                                                                      .fontWeight,
+                                                                  fontStyle: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .headlineMedium
+                                                                      .fontStyle,
+                                                                ),
+                                                                fontSize: 20.0,
+                                                                letterSpacing:
+                                                                    0.0,
+                                                                fontWeight: FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .headlineMedium
+                                                                    .fontWeight,
+                                                                fontStyle: FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .headlineMedium
+                                                                    .fontStyle,
+                                                              ),
                                                         ),
                                                         Padding(
                                                           padding:
@@ -258,7 +270,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                                         .bodyMedium
                                                                         .fontStyle,
                                                                   ),
-                                                                  fontSize: 12.0,
+                                                                  fontSize:
+                                                                      12.0,
                                                                   letterSpacing:
                                                                       0.0,
                                                                   fontWeight:
@@ -276,8 +289,9 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                   ),
                                                 ),
                                                 Align(
-                                                  alignment: AlignmentDirectional(
-                                                      0.0, 0.7),
+                                                  alignment:
+                                                      AlignmentDirectional(
+                                                          0.0, 0.7),
                                                   child: Container(
                                                     width: 40.0,
                                                     height: 40.0,
@@ -294,7 +308,10 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                               0.0, 0.0),
                                                       child: FaIcon(
                                                         FontAwesomeIcons.play,
-                                                        color: FlutterFlowTheme.of(context).primaryBtnText,
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .primaryBtnText,
                                                         size: 20.0,
                                                       ),
                                                     ),
@@ -351,12 +368,13 @@ class _HomeWidgetState extends State<HomeWidget> {
               ),
               // Dynamic Categories Section - Single API call for all categories with films
               FutureBuilder<ApiCallResponse>(
-                future: GetCategoriesWithFilmsCall.call(),
+                future: _categories,
                 builder: (context, categoriesSnapshot) {
                   if (!categoriesSnapshot.hasData) {
                     return Center(
                       child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0.0, 24.0, 0.0, 0.0),
+                        padding:
+                            EdgeInsetsDirectional.fromSTEB(0.0, 24.0, 0.0, 0.0),
                         child: SizedBox(
                           width: 40.0,
                           height: 40.0,
@@ -369,53 +387,69 @@ class _HomeWidgetState extends State<HomeWidget> {
                       ),
                     );
                   }
-                  
+
+                  if (!categoriesSnapshot.data!.succeeded)
+                    return ApiErrorPanel(
+                      response: categoriesSnapshot.data!,
+                      onRetry: () => setState(() {
+                        _categories = GetCategoriesWithFilmsCall.call();
+                      }),
+                    );
                   final categoriesData = getJsonField(
                     categoriesSnapshot.data!.jsonBody,
                     r'''$.data''',
                   );
-                  
+
                   if (categoriesData == null || !(categoriesData is List)) {
                     return SizedBox.shrink();
                   }
-                  
+
                   final categories = categoriesData as List;
-                  
+
                   return Column(
                     children: List.generate(categories.length, (categoryIndex) {
                       final category = categories[categoryIndex];
                       final categoryId = getJsonField(category, r'''$.id''');
-                      final categoryName = getJsonField(category, r'''$.category''')?.toString() ?? '';
+                      final categoryName =
+                          getJsonField(category, r'''$.category''')
+                                  ?.toString() ??
+                              '';
                       final films = getJsonField(category, r'''$.films''');
-                      
+
                       if (categoryId == null || categoryName.isEmpty) {
                         return SizedBox.shrink();
                       }
-                      
-                      final filmsList = films != null && films is List ? films : <dynamic>[];
-                      
+
+                      final filmsList =
+                          films != null && films is List ? films : <dynamic>[];
+
                       if (filmsList.isEmpty) {
                         return SizedBox.shrink();
                       }
-                      
+
                       return Column(
                         children: [
                           Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 16.0),
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                24.0, 24.0, 24.0, 16.0),
                             child: Row(
                               mainAxisSize: MainAxisSize.max,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   categoryName,
-                                  style: FlutterFlowTheme.of(context).titleSmall.override(
+                                  style: FlutterFlowTheme.of(context)
+                                      .titleSmall
+                                      .override(
                                         font: GoogleFonts.poppins(
-                                          fontWeight: FlutterFlowTheme.of(context)
-                                              .titleSmall
-                                              .fontWeight,
-                                          fontStyle: FlutterFlowTheme.of(context)
-                                              .titleSmall
-                                              .fontStyle,
+                                          fontWeight:
+                                              FlutterFlowTheme.of(context)
+                                                  .titleSmall
+                                                  .fontWeight,
+                                          fontStyle:
+                                              FlutterFlowTheme.of(context)
+                                                  .titleSmall
+                                                  .fontStyle,
                                         ),
                                         letterSpacing: 0.0,
                                         fontWeight: FlutterFlowTheme.of(context)
@@ -432,14 +466,16 @@ class _HomeWidgetState extends State<HomeWidget> {
                           SizedBox(
                             height: 224.0,
                             child: ListView.builder(
-                              padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  24.0, 0.0, 24.0, 0.0),
                               scrollDirection: Axis.horizontal,
                               physics: const BouncingScrollPhysics(),
                               itemCount: filmsList.length,
                               itemBuilder: (context, filmIndex) {
                                 final filmItem = filmsList[filmIndex];
                                 return Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 16.0, 0.0),
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0.0, 0.0, 16.0, 0.0),
                                   child: SizedBox(
                                     width: 140.0,
                                     child: InkWell(
@@ -449,9 +485,10 @@ class _HomeWidgetState extends State<HomeWidget> {
                                       highlightColor: Colors.transparent,
                                       onTap: () async {
                                         final contentType = getJsonField(
-                                          filmItem,
-                                          r'''$.content_type''',
-                                        )?.toString() ?? 'film';
+                                              filmItem,
+                                              r'''$.content_type''',
+                                            )?.toString() ??
+                                            'film';
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -514,4 +551,3 @@ class _HomeWidgetState extends State<HomeWidget> {
     );
   }
 }
-

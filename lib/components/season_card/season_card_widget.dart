@@ -59,7 +59,7 @@ class _SeasonCardWidgetState extends State<SeasonCardWidget> {
           context,
           MaterialPageRoute(
             builder: (context) => PlayerWidget(
-              videoid: widget.videoid,
+              videoUrl: widget.videoid,
             ),
           ),
         );

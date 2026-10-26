@@ -1,0 +1,141 @@
+workflows:
+  web-preview:
+    name: Outbuster - Web preview
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      flutter: 3.35.7
+      java: 17
+    scripts:
+      - name: Resolve dependencies
+        script: flutter pub get
+      - name: Analyze Dart
+        script: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Verify application flows
+        script: flutter test
+      - name: Build web preview
+        script: flutter build web --release
+      - name: Package preview
+        script: cd build/web && zip -r ../outbuster-web.zip .
+    artifacts:
+      - build/outbuster-web.zip
+
+  android-preview:
+    name: Outbuster - Android test APK
+    instance_type: linux_x2
+    max_build_duration: 45
+    environment:
+      flutter: 3.35.7
+      java: 17
+    scripts:
+      - name: Resolve dependencies
+        script: flutter pub get
+      - name: Verify application flows
+        script: flutter test
+      - name: Build installable debug APK
+        script: flutter build apk --debug
+    artifacts:
+      - build/app/outputs/flutter-apk/app-debug.apk
+
+  ios-preview:
+    name: Outbuster - iOS simulator
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      flutter: 3.35.7
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Resolve dependencies
+        script: flutter pub get
+      - name: Install CocoaPods
+        script: cd ios && pod install
+      - name: Verify application flows
+        script: flutter test
+      - name: Build iOS simulator without signing
+        script: flutter build ios --simulator --debug
+      - name: Package simulator app
+        script: cd build/ios/iphonesimulator && zip -r ../outbuster-simulator.zip Runner.app
+    artifacts:
+      - build/ios/outbuster-simulator.zip
+
+  android-release:
+    name: Outbuster - Google Play internal
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      flutter: 3.35.7
+      java: 17
+      groups:
+        - outbuster_android_release
+      vars:
+        PACKAGE_NAME: com.outbuster.app
+    scripts:
+      - name: Check store identity and signing secrets
+        script: python3 ci/prepare_android_signing.py
+      - name: Resolve dependencies
+        script: flutter pub get
+      - name: Verify application flows
+        script: flutter test
+      - name: Build signed app bundle with next store version code
+        script: |
+          set -euo pipefail
+          latest=$(google-play get-latest-build-number --package-name "$PACKAGE_NAME")
+          [[ "$latest" =~ ^[0-9]+$ ]] || { echo "Cannot determine the existing Play version code."; exit 1; }
+          flutter build appbundle --release --build-number="$((latest + 1))"
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/mapping/release/mapping.txt
+    publishing:
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+
+  ios-release:
+    name: Outbuster - App Store Connect upload
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.35.7
+      xcode: latest
+      cocoapods: default
+      groups:
+        - outbuster_ios_release
+      vars:
+        BUNDLE_ID: com.outbuster.app
+        APP_STORE_APPLE_ID: "6447878468"
+    scripts:
+      - name: Check store identity and signing secrets
+        script: python3 ci/check_ios_release.py
+      - name: Resolve dependencies
+        script: flutter pub get
+      - name: Install CocoaPods
+        script: cd ios && pod install
+      - name: Prepare signing keychain
+        script: keychain initialize
+      - name: Fetch existing Outbuster signing files
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE
+      - name: Install signing certificates
+        script: keychain add-certificates
+      - name: Apply provisioning profiles
+        script: xcode-project use-profiles
+      - name: Verify application flows
+        script: flutter test
+      - name: Build signed IPA with next App Store build number
+        script: |
+          set -euo pipefail
+          latest=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
+          [[ "$latest" =~ ^[0-9]+$ ]] || { echo "Cannot determine the existing App Store build number."; exit 1; }
+          flutter build ipa --release --build-number="$((latest + 1))" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: false
+        submit_to_app_store: false

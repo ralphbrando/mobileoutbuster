@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,7 @@ import 'backend/firebase/firebase_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'index.dart';
+import 'components/launch/outbuster_launch_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,20 +46,29 @@ class _MyAppState extends State<MyApp> {
   late Stream<OutbusterAuthUser> userStream;
   OutbusterAuthUser? initialUser;
   bool displaySplashImage = true;
+  StreamSubscription<OutbusterAuthUser>? _userSubscription;
+  Timer? _splashTimer;
 
   @override
   void initState() {
     super.initState();
 
-    userStream = outbusterAuthUserStream()
-      ..listen((user) {
-        initialUser ?? safeSetState(() => initialUser = user);
-      });
+    userStream = outbusterAuthUserStream();
+    _userSubscription = userStream.listen((user) {
+      initialUser ?? safeSetState(() => initialUser = user);
+    });
 
-    Future.delayed(
+    _splashTimer = Timer(
       Duration(milliseconds: 1000),
       () => safeSetState(() => displaySplashImage = false),
     );
+  }
+
+  @override
+  void dispose() {
+    _splashTimer?.cancel();
+    _userSubscription?.cancel();
+    super.dispose();
   }
 
   void setThemeMode(ThemeMode mode) => safeSetState(() {
@@ -75,7 +86,8 @@ class _MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en', '')],
+      locale: const Locale('fr'),
+      supportedLocales: const [Locale('fr'), Locale('en')],
       theme: ThemeData(
         brightness: Brightness.light,
         useMaterial3: false,
@@ -86,19 +98,7 @@ class _MyAppState extends State<MyApp> {
       ),
       themeMode: _themeMode,
       home: initialUser == null || displaySplashImage
-          ? Builder(
-              builder: (context) => Container(
-                color: FlutterFlowTheme.of(context).primaryBackground,
-                child: Center(
-                child: Image.asset(
-                    'assets/images/app_launcher_icon.png',
-                    fit: BoxFit.contain,
-                    width: 200.0,
-                    height: 200.0,
-                  ),
-                ),
-              ),
-            )
+          ? const OutbusterLaunchScreen()
           : currentUser!.loggedIn
               ? NavBarPage()
               : OnboardingWidget(),
