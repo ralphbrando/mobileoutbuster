@@ -55,7 +55,10 @@ class _MovieCardWidgetState extends State<MovieCardWidget> {
         // Use available width, or default to 115 if unconstrained
         final cardWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 115.0;
         // Calculate image height based on aspect ratio (roughly 1.5:1)
-        final imageHeight = cardWidth * 1.5;
+        final titleHeight = MediaQuery.textScalerOf(context).scale(12) * 3 + 8;
+        final imageHeight = constraints.maxHeight.isFinite
+            ? (constraints.maxHeight - titleHeight).clamp(0.0, cardWidth * 1.5)
+            : cardWidth * 1.5;
         
         return Container(
           width: cardWidth,

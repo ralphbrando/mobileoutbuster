@@ -12,12 +12,14 @@ void main() {
       ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
     await fonts.load();
   });
-  Future<void> launch(WidgetTester tester, Size size, {VoidCallback? onStart}) async {
+  Future<void> launch(WidgetTester tester, Size size,
+      {VoidCallback? onStart}) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(home: OutbusterLaunchScreen(onStart: onStart)));
+    await tester
+        .pumpWidget(MaterialApp(home: OutbusterLaunchScreen(onStart: onStart)));
     await tester.runAsync(() async {
       for (final element in find.byType(Image).evaluate()) {
         await precacheImage((element.widget as Image).image, element);
@@ -26,8 +28,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Welcome stays usable on small phones, landscape and tablets', (tester) async {
-    for (final size in [const Size(320, 568), const Size(844, 390), const Size(1024, 1366)]) {
+  testWidgets('Welcome stays usable on small phones, landscape and tablets',
+      (tester) async {
+    for (final size in [
+      const Size(320, 568),
+      const Size(844, 390),
+      const Size(1024, 1366)
+    ]) {
       var tapped = false;
       await launch(tester, size, onStart: () => tapped = true);
       expect(tester.takeException(), isNull);
@@ -48,11 +55,13 @@ void main() {
   if (Platform.environment['OUTBUSTER_EXPORT_PREVIEWS'] == 'true') {
     testWidgets('Export welcome screenshot', (tester) async {
       await launch(tester, const Size(390, 844), onStart: () {});
-      await expectLater(find.byType(OutbusterLaunchScreen), matchesGoldenFile('previews/welcome.png'));
+      await expectLater(find.byType(OutbusterLaunchScreen),
+          matchesGoldenFile('previews/welcome.png'));
     });
     testWidgets('Export splash screenshot', (tester) async {
       await launch(tester, const Size(390, 844));
-      await expectLater(find.byType(OutbusterLaunchScreen), matchesGoldenFile('previews/splash.png'));
+      await expectLater(find.byType(OutbusterLaunchScreen),
+          matchesGoldenFile('previews/splash.png'));
     });
   }
 }

@@ -1,3 +1,4 @@
+import '/components/api_error_panel.dart';
 import '/backend/api_requests/api_calls.dart';
 import '/components/movie_card/movie_card_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -36,11 +37,14 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isFavorited = false;
   bool _isTogglingFavorite = false;
+  bool _favoriteInitialized = false;
+  late Future<ApiCallResponse> _details;
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => TvShowsDetailsModel());
+    _details = _getContentDetails();
   }
 
   @override
@@ -51,32 +55,44 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
 
   Future<void> _toggleFavorite() async {
     if (_isTogglingFavorite || widget.contentType == 'serie') return;
-    
+
     setState(() => _isTogglingFavorite = true);
-    
+
     try {
       final filmId = int.tryParse(widget.tvId ?? '0') ?? 0;
       final response = await ToggleFavoriteCall.call(filmId: filmId);
-      
+      if (!mounted) return;
+
       if (response.succeeded) {
         final data = getJsonField(response.jsonBody, r'''$.data''');
-        final isFavorited = getJsonField(data, r'''$.is_favorited''') == true;
+        final value = getJsonField(data, r'''$.is_favorited''');
+        final isFavorited = value == true || value == 1;
         setState(() => _isFavorited = isFavorited);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Impossible de modifier les favoris. Réessayez.')),
+        );
       }
     } catch (e) {
-      // Silent error
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Impossible de modifier les favoris. Réessayez.')),
+        );
     } finally {
-      setState(() => _isTogglingFavorite = false);
+      if (mounted) setState(() => _isTogglingFavorite = false);
     }
   }
 
   Future<ApiCallResponse> _getContentDetails() {
     final id = int.tryParse(widget.tvId ?? '0') ?? 0;
-    final contentTypeFromSerie = widget.serie != null 
-        ? getJsonField(widget.serie, r'''$.content_type''')?.toString() 
+    final contentTypeFromSerie = widget.serie != null
+        ? getJsonField(widget.serie, r'''$.content_type''')?.toString()
         : null;
-    final isSerie = contentTypeFromSerie == 'serie' || widget.contentType == 'serie';
-    
+    final isSerie =
+        contentTypeFromSerie == 'serie' || widget.contentType == 'serie';
+
     if (isSerie) {
       return GetSerieDetailsCall.call(serieId: id);
     } else {
@@ -95,7 +111,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         body: FutureBuilder<ApiCallResponse>(
-          future: _getContentDetails(),
+          future: _details,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return Center(
@@ -110,8 +126,22 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                 ),
               );
             }
-            
-            final filmData = getJsonField(snapshot.data!.jsonBody, r'''$.data''');
+
+            if (!snapshot.data!.succeeded)
+              return Column(children: [
+                Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                        tooltip: 'Retour',
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(context))),
+                ApiErrorPanel(
+                    response: snapshot.data!,
+                    onRetry: () =>
+                        setState(() => _details = _getContentDetails())),
+              ]);
+            final filmData =
+                getJsonField(snapshot.data!.jsonBody, r'''$.data''');
 
             if (filmData == null) {
               return Center(
@@ -121,18 +151,18 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                 ),
               );
             }
-            
-            final isSerie = getJsonField(filmData, r'''$.content_type''')?.toString() == 'serie' ||
-                widget.contentType == 'serie';
-            
+
+            final isSerie =
+                getJsonField(filmData, r'''$.content_type''')?.toString() ==
+                        'serie' ||
+                    widget.contentType == 'serie';
+
             // Initialize favorite state
-            final apiIsFavorited = getJsonField(filmData, r'''$.is_favorited''');
-            if (apiIsFavorited != null && apiIsFavorited == 1 && !_isFavorited && !_isTogglingFavorite) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && !_isFavorited) {
-                  setState(() => _isFavorited = true);
-                }
-              });
+            final apiIsFavorited =
+                getJsonField(filmData, r'''$.is_favorited''');
+            if (!_favoriteInitialized) {
+              _isFavorited = apiIsFavorited == true || apiIsFavorited == 1;
+              _favoriteInitialized = true;
             }
 
             return SingleChildScrollView(
@@ -193,7 +223,10 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
             height: 400.0,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.transparent, FlutterFlowTheme.of(context).primaryBackground],
+                colors: [
+                  Colors.transparent,
+                  FlutterFlowTheme.of(context).primaryBackground
+                ],
                 stops: const [0.0, 1.0],
                 begin: const AlignmentDirectional(0.0, -1.0),
                 end: const AlignmentDirectional(0, 1.0),
@@ -202,20 +235,27 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
           ),
           // Back & Favorite Buttons
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
+            padding:
+                const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildCircleButton(
                   context,
                   icon: Icons.arrow_back_ios_outlined,
+                  label: 'Retour',
                   onTap: () => Navigator.pop(context),
                 ),
                 if (!isSerie)
                   _buildCircleButton(
                     context,
                     icon: _isFavorited ? Icons.favorite : Icons.favorite_border,
-                    iconColor: _isFavorited ? FlutterFlowTheme.of(context).primary : Colors.white,
+                    label: _isFavorited
+                        ? 'Retirer des favoris'
+                        : 'Ajouter aux favoris',
+                    iconColor: _isFavorited
+                        ? FlutterFlowTheme.of(context).primary
+                        : Colors.white,
                     onTap: _toggleFavorite,
                     isLoading: _isTogglingFavorite,
                   ),
@@ -227,18 +267,21 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
             alignment: const AlignmentDirectional(0.0, 1.0),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 24.0),
+              padding:
+                  const EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    getJsonField(filmData, r'''$.film_original_title''').toString(),
+                    getJsonField(filmData, r'''$.film_original_title''')
+                        .toString(),
                     maxLines: 2,
                     style: FlutterFlowTheme.of(context).headlineMedium.override(
-                      font: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                      fontSize: 24.0,
-                    ),
+                          font:
+                              GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                          fontSize: 24.0,
+                        ),
                   ),
                   _buildTagline(context, filmData),
                   _buildMetaInfo(context, filmData),
@@ -252,62 +295,69 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
     );
   }
 
-  Widget _buildCircleButton(BuildContext context, {
+  Widget _buildCircleButton(
+    BuildContext context, {
     required IconData icon,
+    required String label,
     required VoidCallback onTap,
     Color? iconColor,
     bool isLoading = false,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 40.0,
-        height: 40.0,
-        decoration: const BoxDecoration(
-          color: Color(0xB3272B30),
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: isLoading
-              ? const SizedBox(
-                  width: 20.0,
-                  height: 20.0,
-                  child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.white),
-                )
-              : Icon(icon, color: iconColor ?? Colors.white, size: 20.0),
-        ),
-      ),
-    );
+    return Semantics(
+        label: label,
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            width: 40.0,
+            height: 40.0,
+            decoration: const BoxDecoration(
+              color: Color(0xB3272B30),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20.0,
+                      height: 20.0,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2.0, color: Colors.white),
+                    )
+                  : Icon(icon, color: iconColor ?? Colors.white, size: 20.0),
+            ),
+          ),
+        ));
   }
 
   Widget _buildTagline(BuildContext context, dynamic filmData) {
     final tagline = getJsonField(filmData, r'''$.film_tagline''').toString();
     if (tagline.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
       child: Text(
         tagline,
         style: FlutterFlowTheme.of(context).bodyMedium.override(
-          font: GoogleFonts.poppins(fontStyle: FontStyle.italic),
-          fontSize: 14.0,
-        ),
+              font: GoogleFonts.poppins(fontStyle: FontStyle.italic),
+              fontSize: 14.0,
+            ),
       ),
     );
   }
 
   Widget _buildMetaInfo(BuildContext context, dynamic filmData) {
-    final runningTime = getJsonField(filmData, r'''$.film_running_time''').toString();
+    final runningTime =
+        getJsonField(filmData, r'''$.film_running_time''').toString();
     final version = getJsonField(filmData, r'''$.film_version''').toString();
     final country = getJsonField(filmData, r'''$.country_name''').toString();
-    
+
     final items = <String>[];
     if (runningTime.isNotEmpty) items.add('$runningTime min');
     if (version.isNotEmpty) items.add(version);
     if (country.isNotEmpty) items.add(country);
-    
+
     if (items.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
       child: Text(
@@ -318,9 +368,10 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   }
 
   Widget _buildActionButtons(BuildContext context, dynamic filmData) {
-    final trailerUrl = getJsonField(filmData, r'''$.trailer_video_id''')?.toString() ?? '';
+    final trailerUrl =
+        getJsonField(filmData, r'''$.trailer_video_id''')?.toString() ?? '';
     final hasTrailer = trailerUrl.isNotEmpty && trailerUrl != 'javascript:;';
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
       child: Row(
@@ -349,15 +400,16 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FaIcon(FontAwesomeIcons.play, color: FlutterFlowTheme.of(context).primaryBtnText, size: 20.0),
+            FaIcon(FontAwesomeIcons.play,
+                color: FlutterFlowTheme.of(context).primaryBtnText, size: 20.0),
             const SizedBox(width: 8.0),
             Text(
               'Regarder',
               style: FlutterFlowTheme.of(context).titleSmall.override(
-                color: FlutterFlowTheme.of(context).primaryBtnText,
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: FlutterFlowTheme.of(context).primaryBtnText,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ],
         ),
@@ -370,7 +422,8 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PlayerWidget(videoUrl: trailerUrl)),
+          MaterialPageRoute(
+              builder: (context) => PlayerWidget(videoUrl: trailerUrl)),
         );
       },
       child: Container(
@@ -378,20 +431,22 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
         padding: const EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: FlutterFlowTheme.of(context).primary, width: 2.0),
+          border: Border.all(
+              color: FlutterFlowTheme.of(context).primary, width: 2.0),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.movie_outlined, color: FlutterFlowTheme.of(context).primary, size: 20.0),
+            Icon(Icons.movie_outlined,
+                color: FlutterFlowTheme.of(context).primary, size: 20.0),
             const SizedBox(width: 8.0),
             Text(
               'Trailer',
               style: FlutterFlowTheme.of(context).titleSmall.override(
-                color: FlutterFlowTheme.of(context).primary,
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: FlutterFlowTheme.of(context).primary,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ],
         ),
@@ -415,28 +470,38 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
     );
 
     final videoResponse = await GetVideoLinkCall.call(videoId: filmId);
+    if (!context.mounted) return;
     Navigator.pop(context);
 
     final responseBody = videoResponse.jsonBody ?? {};
     final hasError = getJsonField(responseBody, r'''$.error''') == true;
-    final message = getJsonField(responseBody, r'''$.message''').toString();
+    final message =
+        getJsonField(responseBody, r'''$.message''')?.toString() ?? '';
 
     if (!videoResponse.succeeded || hasError) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Lecture indisponible'),
-          content: Text(message.isNotEmpty ? message : 'La lecture est réservée aux abonnés.'),
+          content: Text(message.isNotEmpty
+              ? message
+              : 'La lecture est réservée aux abonnés.'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
           ],
         ),
       );
       return;
     }
 
-    final videoUrl = getJsonField(responseBody, r'''$.data''').toString();
-    if (videoUrl.isEmpty) {
+    final videoUrl =
+        getJsonField(responseBody, r'''$.data''')?.toString() ?? '';
+    final uri = Uri.tryParse(videoUrl);
+    if (uri == null ||
+        !['https', 'http'].contains(uri.scheme) ||
+        uri.host.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lien vidéo indisponible.')),
       );
@@ -453,17 +518,17 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
     return Text(
       title,
       style: FlutterFlowTheme.of(context).titleSmall.override(
-        font: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        color: FlutterFlowTheme.of(context).primary,
-        fontSize: 18.0,
-      ),
+            font: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            color: FlutterFlowTheme.of(context).primary,
+            fontSize: 18.0,
+          ),
     );
   }
 
   Widget _buildSynopsis(BuildContext context, dynamic filmData) {
     final synopsis = getJsonField(filmData, r'''$.film_synopsis''').toString();
     if (synopsis.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -474,8 +539,8 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
           Text(
             synopsis,
             style: FlutterFlowTheme.of(context).bodyMedium.override(
-              font: GoogleFonts.poppins(fontWeight: FontWeight.w300),
-            ),
+                  font: GoogleFonts.poppins(fontWeight: FontWeight.w300),
+                ),
           ),
         ],
       ),
@@ -485,7 +550,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildEpisodes(BuildContext context, dynamic filmData) {
     final episodes = getJsonField(filmData, r'''$.episodes''');
     if (episodes == null) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -495,18 +560,24 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
           const SizedBox(height: 8.0),
           ...(episodes as List).map<Widget>((episode) {
             final episodeId = getJsonField(episode, r'''$.id''');
-            final season = getJsonField(episode, r'''$.season''')?.toString() ?? '1';
-            final episodeNum = getJsonField(episode, r'''$.episode''')?.toString() ?? '1';
-            final title = getJsonField(episode, r'''$.title''')?.toString() ?? '';
-            final runningTime = getJsonField(episode, r'''$.running_time''')?.toString() ?? '';
-            
+            final season =
+                getJsonField(episode, r'''$.season''')?.toString() ?? '1';
+            final episodeNum =
+                getJsonField(episode, r'''$.episode''')?.toString() ?? '1';
+            final title =
+                getJsonField(episode, r'''$.title''')?.toString() ?? '';
+            final runningTime =
+                getJsonField(episode, r'''$.running_time''')?.toString() ?? '';
+
             return Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 12.0),
+              padding:
+                  const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 12.0),
               child: InkWell(
                 onTap: () => _playEpisode(context, episodeId),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsetsDirectional.fromSTEB(16.0, 12.0, 16.0, 12.0),
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                      16.0, 12.0, 16.0, 12.0),
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).secondaryBackground,
                     borderRadius: BorderRadius.circular(8.0),
@@ -535,17 +606,23 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                           children: [
                             Text(
                               'S$season E$episodeNum${title.isNotEmpty ? ' - $title' : ''}',
-                              style: FlutterFlowTheme.of(context).bodyMedium.override(fontWeight: FontWeight.w600),
+                              style: FlutterFlowTheme.of(context)
+                                  .bodyMedium
+                                  .override(fontWeight: FontWeight.w600),
                             ),
                             if (runningTime.isNotEmpty)
                               Text(
                                 '$runningTime min',
-                                style: FlutterFlowTheme.of(context).bodySmall.override(fontSize: 12.0),
+                                style: FlutterFlowTheme.of(context)
+                                    .bodySmall
+                                    .override(fontSize: 12.0),
                               ),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right, color: FlutterFlowTheme.of(context).secondaryText, size: 24.0),
+                      Icon(Icons.chevron_right,
+                          color: FlutterFlowTheme.of(context).secondaryText,
+                          size: 24.0),
                     ],
                   ),
                 ),
@@ -559,7 +636,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
 
   Future<void> _playEpisode(BuildContext context, dynamic episodeId) async {
     if (episodeId == null) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -567,30 +644,42 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
     );
 
     final videoResponse = await GetSerieVideoLinkCall.call(
-      episodeId: episodeId is int ? episodeId : int.tryParse(episodeId.toString()) ?? 0,
+      episodeId: episodeId is int
+          ? episodeId
+          : int.tryParse(episodeId.toString()) ?? 0,
     );
+    if (!context.mounted) return;
     Navigator.pop(context);
 
     final responseBody = videoResponse.jsonBody ?? {};
     final hasError = getJsonField(responseBody, r'''$.error''') == true;
-    final message = getJsonField(responseBody, r'''$.message''').toString();
+    final message =
+        getJsonField(responseBody, r'''$.message''')?.toString() ?? '';
 
     if (!videoResponse.succeeded || hasError) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Lecture indisponible'),
-          content: Text(message.isNotEmpty ? message : 'La lecture est réservée aux abonnés.'),
+          content: Text(message.isNotEmpty
+              ? message
+              : 'La lecture est réservée aux abonnés.'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
           ],
         ),
       );
       return;
     }
 
-    final videoUrl = getJsonField(responseBody, r'''$.data''').toString();
-    if (videoUrl.isEmpty) {
+    final videoUrl =
+        getJsonField(responseBody, r'''$.data''')?.toString() ?? '';
+    final uri = Uri.tryParse(videoUrl);
+    if (uri == null ||
+        !['https', 'http'].contains(uri.scheme) ||
+        uri.host.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lien vidéo indisponible.')),
       );
@@ -606,7 +695,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildCategories(BuildContext context, dynamic filmData) {
     final categories = getJsonField(filmData, r'''$.categories''');
     if (categories == null) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -619,8 +708,9 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
             runSpacing: 8.0,
             children: (categories as List).map<Widget>((category) {
               final categoryId = getJsonField(category, r'''$.id''');
-              final categoryName = getJsonField(category, r'''$.name''')?.toString() ?? '';
-              
+              final categoryName =
+                  getJsonField(category, r'''$.name''')?.toString() ?? '';
+
               return InkWell(
                 onTap: () {
                   if (categoryId != null) {
@@ -628,7 +718,9 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => CategoryFilmsWidget(
-                          categoryId: categoryId is int ? categoryId : int.tryParse(categoryId.toString()) ?? 0,
+                          categoryId: categoryId is int
+                              ? categoryId
+                              : int.tryParse(categoryId.toString()) ?? 0,
                           categoryName: categoryName,
                         ),
                       ),
@@ -636,7 +728,8 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsetsDirectional.fromSTEB(16.0, 8.0, 16.0, 8.0),
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                      16.0, 8.0, 16.0, 8.0),
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).primary,
                     borderRadius: BorderRadius.circular(20.0),
@@ -644,10 +737,10 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                   child: Text(
                     categoryName,
                     style: FlutterFlowTheme.of(context).bodySmall.override(
-                      fontSize: 13.0,
-                      color: FlutterFlowTheme.of(context).primaryBtnText,
-                      fontWeight: FontWeight.w500,
-                    ),
+                          fontSize: 13.0,
+                          color: FlutterFlowTheme.of(context).primaryBtnText,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                 ),
               );
@@ -661,7 +754,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildGenres(BuildContext context, dynamic filmData) {
     final genres = getJsonField(filmData, r'''$.genre_list''').toString();
     if (genres.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -676,9 +769,10 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   }
 
   Widget _buildCast(BuildContext context, dynamic filmData) {
-    final cast = getJsonField(filmData, r'''$.film_cast_name_list''').toString();
+    final cast =
+        getJsonField(filmData, r'''$.film_cast_name_list''').toString();
     if (cast.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -693,9 +787,10 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   }
 
   Widget _buildCrew(BuildContext context, dynamic filmData) {
-    final crew = getJsonField(filmData, r'''$.film_crew_name_list''').toString();
+    final crew =
+        getJsonField(filmData, r'''$.film_crew_name_list''').toString();
     if (crew.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -712,7 +807,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildPros(BuildContext context, dynamic filmData) {
     final pros = getJsonField(filmData, r'''$.film_pros''').toString();
     if (pros.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -729,7 +824,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildCons(BuildContext context, dynamic filmData) {
     final cons = getJsonField(filmData, r'''$.film_cons''').toString();
     if (cons.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -746,7 +841,7 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildCritics(BuildContext context, dynamic filmData) {
     final critics = getJsonField(filmData, r'''$.critic_list''');
     if (critics == null) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0.0),
       child: Column(
@@ -755,16 +850,30 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
           _buildSectionTitle(context, 'Critiques'),
           const SizedBox(height: 8.0),
           ...(critics as List).map<Widget>((critic) {
-            final criticTitle = getJsonField(critic, r'''$.film_critic_title''')?.toString() ?? '';
-            final criticSource = getJsonField(critic, r'''$.artwork_critic_website''')?.toString() ?? '';
-            final criticLogo = getJsonField(critic, r'''$.artwork_critic_logotype''')?.toString() ?? '';
-            final criticism = getJsonField(critic, r'''$.film_criticism''')?.toString() ?? '';
-            final fullReviewLink = getJsonField(critic, r'''$.film_complete_criticism_link''')?.toString() ?? '';
-            
+            final criticTitle =
+                getJsonField(critic, r'''$.film_critic_title''')?.toString() ??
+                    '';
+            final criticSource =
+                getJsonField(critic, r'''$.artwork_critic_website''')
+                        ?.toString() ??
+                    '';
+            final criticLogo =
+                getJsonField(critic, r'''$.artwork_critic_logotype''')
+                        ?.toString() ??
+                    '';
+            final criticism =
+                getJsonField(critic, r'''$.film_criticism''')?.toString() ?? '';
+            final fullReviewLink =
+                getJsonField(critic, r'''$.film_complete_criticism_link''')
+                        ?.toString() ??
+                    '';
+
             return Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
+              padding:
+                  const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
               child: Container(
-                padding: const EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                    16.0, 16.0, 16.0, 16.0),
                 decoration: BoxDecoration(
                   color: FlutterFlowTheme.of(context).secondaryBackground,
                   borderRadius: BorderRadius.circular(8.0),
@@ -774,13 +883,15 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                   children: [
                     if (criticSource.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                            0.0, 0.0, 0.0, 8.0),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (criticLogo.isNotEmpty)
                               Padding(
-                                padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 8.0, 0.0),
+                                padding: const EdgeInsetsDirectional.fromSTEB(
+                                    0.0, 0.0, 8.0, 0.0),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(4.0),
                                   child: Image.network(
@@ -788,18 +899,22 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                                     width: 24.0,
                                     height: 24.0,
                                     fit: BoxFit.contain,
-                                    errorBuilder: (c, e, s) => const SizedBox.shrink(),
+                                    errorBuilder: (c, e, s) =>
+                                        const SizedBox.shrink(),
                                   ),
                                 ),
                               ),
                             Flexible(
                               child: Text(
                                 criticSource,
-                                style: FlutterFlowTheme.of(context).bodySmall.override(
-                                  fontSize: 12.0,
-                                  color: FlutterFlowTheme.of(context).primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: FlutterFlowTheme.of(context)
+                                    .bodySmall
+                                    .override(
+                                      fontSize: 12.0,
+                                      color:
+                                          FlutterFlowTheme.of(context).primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                               ),
                             ),
                           ],
@@ -809,38 +924,47 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                       Text(
                         criticTitle,
                         style: FlutterFlowTheme.of(context).titleSmall.override(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w600,
-                        ),
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     if (criticism.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
-                        child: Text(criticism, style: FlutterFlowTheme.of(context).bodyMedium),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                            0.0, 8.0, 0.0, 0.0),
+                        child: Text(criticism,
+                            style: FlutterFlowTheme.of(context).bodyMedium),
                       ),
                     if (fullReviewLink.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                            0.0, 12.0, 0.0, 0.0),
                         child: InkWell(
                           onTap: () async {
                             final uri = Uri.tryParse(fullReviewLink);
                             if (uri != null && await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
                             }
                           },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.open_in_new, size: 16.0, color: FlutterFlowTheme.of(context).primary),
+                              Icon(Icons.open_in_new,
+                                  size: 16.0,
+                                  color: FlutterFlowTheme.of(context).primary),
                               const SizedBox(width: 4.0),
                               Text(
                                 'Lire la critique complète',
-                                style: FlutterFlowTheme.of(context).bodySmall.override(
-                                  fontSize: 13.0,
-                                  color: FlutterFlowTheme.of(context).primary,
-                                  fontWeight: FontWeight.w500,
-                                  decoration: TextDecoration.underline,
-                                ),
+                                style: FlutterFlowTheme.of(context)
+                                    .bodySmall
+                                    .override(
+                                      fontSize: 13.0,
+                                      color:
+                                          FlutterFlowTheme.of(context).primary,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration.underline,
+                                    ),
                               ),
                             ],
                           ),
@@ -859,10 +983,10 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
   Widget _buildMoreVideos(BuildContext context, dynamic filmData) {
     final moreVideos = getJsonField(filmData, r'''$.more_videos_list''');
     if (moreVideos == null) return const SizedBox.shrink();
-    
+
     final videoList = (moreVideos as List).take(10).toList();
     if (videoList.isEmpty) return const SizedBox.shrink();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -880,7 +1004,8 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
             itemBuilder: (context, index) {
               final videoItem = videoList[index];
               return Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 16.0, 0.0),
+                padding:
+                    const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 16.0, 0.0),
                 child: SizedBox(
                   width: 140.0,
                   child: InkWell(
@@ -889,7 +1014,8 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => TvShowsDetailsWidget(
-                            tvId: getJsonField(videoItem, r'''$.id''').toString(),
+                            tvId:
+                                getJsonField(videoItem, r'''$.id''').toString(),
                           ),
                         ),
                       );
@@ -897,12 +1023,16 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                     child: MovieCardWidget(
                       key: Key('KeyMore_${index}_of_${videoList.length}'),
                       imagePath: functions.cleanStorageUrl(
-                        getJsonField(videoItem, r'''$.film_cover_url''').toString(),
+                        getJsonField(videoItem, r'''$.film_cover_url''')
+                            .toString(),
                       ),
-                      title: getJsonField(videoItem, r'''$.film_original_title''').toString(),
+                      title:
+                          getJsonField(videoItem, r'''$.film_original_title''')
+                              .toString(),
                       rating: '',
                       image: functions.cleanStorageUrl(
-                        getJsonField(videoItem, r'''$.film_cover_url''').toString(),
+                        getJsonField(videoItem, r'''$.film_cover_url''')
+                            .toString(),
                       ),
                     ),
                   ),

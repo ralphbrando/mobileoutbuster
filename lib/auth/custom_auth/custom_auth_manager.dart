@@ -37,7 +37,7 @@ class CustomAuthManager {
     outbusterAuthUserSubject.add(
       OutbusterAuthUser(loggedIn: false),
     );
-    persistAuthData();
+    await persistAuthData();
   }
 
   Future<OutbusterAuthUser?> signIn({
@@ -46,14 +46,24 @@ class CustomAuthManager {
     DateTime? tokenExpiration,
     String? authUid,
     UsersStruct? userData,
-  }) async =>
-      _updateCurrentUser(
-        authenticationToken: authenticationToken,
-        refreshToken: refreshToken,
-        tokenExpiration: tokenExpiration,
-        authUid: authUid,
-        userData: userData,
-      );
+  }) async {
+    if (authenticationToken == null ||
+        authenticationToken.trim().isEmpty ||
+        authUid == null ||
+        authUid.isEmpty) {
+      throw ArgumentError('A valid token and user ID are required.');
+    }
+    final user = _updateCurrentUser(
+      authenticationToken: authenticationToken,
+      refreshToken: refreshToken,
+      tokenExpiration: tokenExpiration,
+      authUid: authUid,
+      userData: userData,
+    );
+    ApiManager.setAuthToken(authenticationToken);
+    await persistAuthData();
+    return user;
+  }
 
   void updateAuthUserData({
     String? authenticationToken,
@@ -74,6 +84,7 @@ class CustomAuthManager {
       authUid: authUid,
       userData: userData,
     );
+    persistAuthData();
   }
 
   OutbusterAuthUser? _updateCurrentUser({
@@ -95,7 +106,6 @@ class CustomAuthManager {
       userData: userData,
     );
     outbusterAuthUserSubject.add(updatedUser);
-    persistAuthData();
     return updatedUser;
   }
 
@@ -117,15 +127,24 @@ class CustomAuthManager {
                   .cast<String, dynamic>(),
             )
           : null;
-      
-      // Set token in ApiManager if available
-      if (authenticationToken != null) {
+
+      // Only restore usable sessions; expired tokens must never reach the API.
+      if (authenticationToken != null &&
+          authenticationToken!.trim().isNotEmpty &&
+          uid != null &&
+          uid!.isNotEmpty &&
+          (tokenExpiration == null ||
+              tokenExpiration!.isAfter(DateTime.now()))) {
         ApiManager.setAuthToken(authenticationToken);
+      } else {
+        await signOut();
+        return;
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing auth: $e');
+        print('Unable to restore the saved session.');
       }
+      await signOut();
       return;
     }
 
@@ -140,22 +159,24 @@ class CustomAuthManager {
     outbusterAuthUserSubject.add(updatedUser);
   }
 
-  void persistAuthData() {
-    authenticationToken != null
+  Future<void> persistAuthData() async {
+    await (authenticationToken != null
         ? _prefs.setString(_kAuthTokenKey, authenticationToken!)
-        : _prefs.remove(_kAuthTokenKey);
-    refreshToken != null
+        : _prefs.remove(_kAuthTokenKey));
+    await (refreshToken != null
         ? _prefs.setString(_kRefreshTokenKey, refreshToken!)
-        : _prefs.remove(_kRefreshTokenKey);
-    tokenExpiration != null
+        : _prefs.remove(_kRefreshTokenKey));
+    await (tokenExpiration != null
         ? _prefs.setInt(
             _kTokenExpirationKey, tokenExpiration!.millisecondsSinceEpoch)
-        : _prefs.remove(_kTokenExpirationKey);
-    uid != null ? _prefs.setString(_kUidKey, uid!) : _prefs.remove(_kUidKey);
-    userData != null
+        : _prefs.remove(_kTokenExpirationKey));
+    await (uid != null
+        ? _prefs.setString(_kUidKey, uid!)
+        : _prefs.remove(_kUidKey));
+    await (userData != null
         ? _prefs.setString(
             _kUserDataKey, jsonEncode(userData!.toSerializableMap()))
-        : _prefs.remove(_kUserDataKey);
+        : _prefs.remove(_kUserDataKey));
   }
 }
 

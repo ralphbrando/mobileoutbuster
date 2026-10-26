@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
@@ -45,20 +46,29 @@ class _MyAppState extends State<MyApp> {
   late Stream<OutbusterAuthUser> userStream;
   OutbusterAuthUser? initialUser;
   bool displaySplashImage = true;
+  StreamSubscription<OutbusterAuthUser>? _userSubscription;
+  Timer? _splashTimer;
 
   @override
   void initState() {
     super.initState();
 
-    userStream = outbusterAuthUserStream()
-      ..listen((user) {
-        initialUser ?? safeSetState(() => initialUser = user);
-      });
+    userStream = outbusterAuthUserStream();
+    _userSubscription = userStream.listen((user) {
+      initialUser ?? safeSetState(() => initialUser = user);
+    });
 
-    Future.delayed(
+    _splashTimer = Timer(
       Duration(milliseconds: 1000),
       () => safeSetState(() => displaySplashImage = false),
     );
+  }
+
+  @override
+  void dispose() {
+    _splashTimer?.cancel();
+    _userSubscription?.cancel();
+    super.dispose();
   }
 
   void setThemeMode(ThemeMode mode) => safeSetState(() {
@@ -76,7 +86,8 @@ class _MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en', '')],
+      locale: const Locale('fr'),
+      supportedLocales: const [Locale('fr'), Locale('en')],
       theme: ThemeData(
         brightness: Brightness.light,
         useMaterial3: false,

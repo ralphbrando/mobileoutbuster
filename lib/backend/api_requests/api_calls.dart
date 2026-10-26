@@ -38,14 +38,6 @@ class LoginCall {
       alwaysAllowBody: false,
     );
     
-    // Store token if login successful
-    if (response.succeeded && response.jsonBody != null) {
-      final data = response.jsonBody['data'];
-      if (data != null && data['token'] != null) {
-        ApiManager.setAuthToken(data['token']);
-      }
-    }
-    
     return response;
   }
 }
