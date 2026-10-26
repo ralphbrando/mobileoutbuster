@@ -102,93 +102,97 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        body: FutureBuilder<ApiCallResponse>(
-          future: _details,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return Center(
-                child: SizedBox(
-                  width: 40.0,
-                  height: 40.0,
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      FlutterFlowTheme.of(context).primary,
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            if (!snapshot.data!.succeeded)
-              return Column(children: [
-                Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                        tooltip: 'Retour',
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context))),
-                ApiErrorPanel(
-                    response: snapshot.data!,
-                    onRetry: () =>
-                        setState(() => _details = _getContentDetails())),
-              ]);
-            final filmData =
-                getJsonField(snapshot.data!.jsonBody, r'''$.data''');
-
-            if (filmData == null) {
-              return Center(
-                child: Text(
-                  'Contenu non trouvé',
-                  style: FlutterFlowTheme.of(context).headlineMedium,
-                ),
-              );
-            }
-
-            final isSerie =
-                getJsonField(filmData, r'''$.content_type''')?.toString() ==
-                        'serie' ||
-                    widget.contentType == 'serie';
-
-            // Initialize favorite state
-            final apiIsFavorited =
-                getJsonField(filmData, r'''$.is_favorited''');
-            if (!_favoriteInitialized) {
-              _isFavorited = apiIsFavorited == true || apiIsFavorited == 1;
-              _favoriteInitialized = true;
-            }
-
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeroImage(context, filmData, isSerie),
-                  _buildSynopsis(context, filmData),
-                  if (isSerie) _buildEpisodes(context, filmData),
-                  _buildCategories(context, filmData),
-                  _buildGenres(context, filmData),
-                  _buildCast(context, filmData),
-                  _buildCrew(context, filmData),
-                  _buildPros(context, filmData),
-                  _buildCons(context, filmData),
-                  _buildCritics(context, filmData),
-                  _buildMoreVideos(context, filmData),
-                  const SizedBox(height: 24.0),
-                ],
-              ),
-            );
+    return PopScope(
+        canPop: !_isTogglingFavorite,
+        child: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
           },
-        ),
-      ),
-    );
+          child: Scaffold(
+            key: scaffoldKey,
+            backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+            body: FutureBuilder<ApiCallResponse>(
+              future: _details,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(
+                    child: SizedBox(
+                      width: 40.0,
+                      height: 40.0,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          FlutterFlowTheme.of(context).primary,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                if (!snapshot.data!.succeeded)
+                  return Column(children: [
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                            tooltip: 'Retour',
+                            icon: const Icon(Icons.arrow_back,
+                                color: Colors.white),
+                            onPressed: () => Navigator.pop(context))),
+                    ApiErrorPanel(
+                        response: snapshot.data!,
+                        onRetry: () => setState(() {
+                              _details = _getContentDetails();
+                            })),
+                  ]);
+                final filmData =
+                    getJsonField(snapshot.data!.jsonBody, r'''$.data''');
+
+                if (filmData == null) {
+                  return Center(
+                    child: Text(
+                      'Contenu non trouvé',
+                      style: FlutterFlowTheme.of(context).headlineMedium,
+                    ),
+                  );
+                }
+
+                final isSerie =
+                    getJsonField(filmData, r'''$.content_type''')?.toString() ==
+                            'serie' ||
+                        widget.contentType == 'serie';
+
+                // Initialize favorite state
+                final apiIsFavorited =
+                    getJsonField(filmData, r'''$.is_favorited''');
+                if (!_favoriteInitialized) {
+                  _isFavorited = apiIsFavorited == true || apiIsFavorited == 1;
+                  _favoriteInitialized = true;
+                }
+
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeroImage(context, filmData, isSerie),
+                      _buildSynopsis(context, filmData),
+                      if (isSerie) _buildEpisodes(context, filmData),
+                      _buildCategories(context, filmData),
+                      _buildGenres(context, filmData),
+                      _buildCast(context, filmData),
+                      _buildCrew(context, filmData),
+                      _buildPros(context, filmData),
+                      _buildCons(context, filmData),
+                      _buildCritics(context, filmData),
+                      _buildMoreVideos(context, filmData),
+                      const SizedBox(height: 24.0),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ));
   }
 
   Widget _buildHeroImage(BuildContext context, dynamic filmData, bool isSerie) {
@@ -244,7 +248,8 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
                   context,
                   icon: Icons.arrow_back_ios_outlined,
                   label: 'Retour',
-                  onTap: () => Navigator.pop(context),
+                  onTap:
+                      _isTogglingFavorite ? null : () => Navigator.pop(context),
                 ),
                 if (!isSerie)
                   _buildCircleButton(
@@ -299,12 +304,13 @@ class _TvShowsDetailsWidgetState extends State<TvShowsDetailsWidget> {
     BuildContext context, {
     required IconData icon,
     required String label,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     Color? iconColor,
     bool isLoading = false,
   }) {
     return Semantics(
         label: label,
+        enabled: onTap != null,
         button: true,
         child: InkWell(
           onTap: onTap,

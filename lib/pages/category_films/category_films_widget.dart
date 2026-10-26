@@ -104,9 +104,10 @@ class _CategoryFilmsWidgetState extends State<CategoryFilmsWidget> {
                 return Center(
                     child: ApiErrorPanel(
                         response: filmsResponse,
-                        onRetry: () => setState(() => _films =
-                            GetFilmsByCategoryCall.call(
-                                categoryId: widget.categoryId))));
+                        onRetry: () => setState(() {
+                              _films = GetFilmsByCategoryCall.call(
+                                  categoryId: widget.categoryId);
+                            })));
               final filmsData = getJsonField(
                 filmsResponse.jsonBody,
                 r'''$.data''',

@@ -142,8 +142,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       if (!snapshot.data!.succeeded)
                         return ApiErrorPanel(
                             response: snapshot.data!,
-                            onRetry: () =>
-                                setState(() => _user = GetUserCall.call()));
+                            onRetry: () => setState(() {
+                                  _user = GetUserCall.call();
+                                }));
                       final userData =
                           getJsonField(snapshot.data!.jsonBody, r'''$.data''');
                       final currentPlan =
@@ -474,8 +475,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       if (!snapshot.data!.succeeded)
                         return ApiErrorPanel(
                             response: snapshot.data!,
-                            onRetry: () => setState(
-                                () => _favorites = GetFavoritesCall.call()));
+                            onRetry: () => setState(() {
+                                  _favorites = GetFavoritesCall.call();
+                                }));
                       final favoritesData =
                           getJsonField(snapshot.data!.jsonBody, r'''$.data''');
                       final favorites =
@@ -545,8 +547,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                     ),
                                   );
                                   if (mounted)
-                                    setState(() =>
-                                        _favorites = GetFavoritesCall.call());
+                                    setState(() {
+                                      _favorites = GetFavoritesCall.call();
+                                    });
                                 },
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,8 +653,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       if (!snapshot.data!.succeeded)
                         return ApiErrorPanel(
                             response: snapshot.data!,
-                            onRetry: () =>
-                                setState(() => _pages = GetPagesCall.call()));
+                            onRetry: () => setState(() {
+                                  _pages = GetPagesCall.call();
+                                }));
                       final pagesData =
                           getJsonField(snapshot.data!.jsonBody, r'''$.data''');
                       final pages = pagesData != null && pagesData is List

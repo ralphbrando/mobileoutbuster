@@ -224,4 +224,55 @@ void main() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+
+  testWidgets(
+      'Returning from a favorite waits for its save and refreshes the library',
+      (tester) async {
+    final save = Completer<void>();
+    var favorited = true;
+    var favoriteReads = 0;
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(home: ProfileWidget()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Test film'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.favorite));
+      await tester.pump();
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
+      await Navigator.of(tester.element(find.byType(TvShowsDetailsWidget)))
+          .maybePop();
+      await tester.pump();
+      expect(find.byType(TvShowsDetailsWidget), findsOneWidget);
+      save.complete();
+      await tester.pumpAndSettle();
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isTrue);
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('Aucun film dans vos favoris'), findsOneWidget);
+      expect(find.text('Test film'), findsNothing);
+      expect(favoriteReads, 2);
+    },
+        () => MockClient((request) async {
+              if (request.url.path.endsWith('/toggle')) {
+                await save.future;
+                favorited = false;
+                return reply({
+                  'data': {'is_favorited': false}
+                });
+              }
+              if (request.url.path.endsWith('/favorites')) {
+                favoriteReads++;
+                return reply({
+                  'data': favorited ? [film('Test film')] : []
+                });
+              }
+              if (request.url.path.endsWith('/user'))
+                return reply({
+                  'data': {'current_plan': null}
+                });
+              if (request.url.path.endsWith('/pages'))
+                return reply({'data': []});
+              return reply({'data': film('Test film')});
+            }));
+  });
 }

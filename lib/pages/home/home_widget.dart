@@ -92,8 +92,9 @@ class _HomeWidgetState extends State<HomeWidget> {
                   if (!pageViewSeriesResponse.succeeded)
                     return ApiErrorPanel(
                       response: pageViewSeriesResponse,
-                      onRetry: () =>
-                          setState(() => _home = GetHomeFilmCall.call()),
+                      onRetry: () => setState(() {
+                        _home = GetHomeFilmCall.call();
+                      }),
                     );
 
                   return Builder(
@@ -390,8 +391,9 @@ class _HomeWidgetState extends State<HomeWidget> {
                   if (!categoriesSnapshot.data!.succeeded)
                     return ApiErrorPanel(
                       response: categoriesSnapshot.data!,
-                      onRetry: () => setState(() =>
-                          _categories = GetCategoriesWithFilmsCall.call()),
+                      onRetry: () => setState(() {
+                        _categories = GetCategoriesWithFilmsCall.call();
+                      }),
                     );
                   final categoriesData = getJsonField(
                     categoriesSnapshot.data!.jsonBody,
